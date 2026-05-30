@@ -578,6 +578,66 @@ The what-if dev-test command compares your current resource costs against Azure 
 azure-cost what-if devtest
 ```
 
+### Threshold checks
+
+The `threshold` command group lets you gate CI/CD pipelines on cost changes. Each sub-command fetches live Azure cost data, evaluates it against your configured threshold, and optionally exits with code 1 when the threshold is exceeded (via `--fail-on-threshold`).
+
+All threshold commands inherit the standard `CostSettings` options (`-s`, `-o`, `--useUSD`, `--filter`, etc.).
+
+#### Shared threshold options
+
+| Option | Description |
+|--------|-------------|
+| `--percentage <value>` | Trigger if the change or deviation exceeds this percentage. E.g. `20` means 20 %. |
+| `--fixed-amount <value>` | Trigger if the absolute change or deviation exceeds this monetary amount. |
+| `--fail-on-threshold` | Exit with code 1 when the threshold is exceeded. Defaults to `false`. |
+
+At least one of `--percentage` or `--fixed-amount` must be supplied (both can be combined — either condition triggers).
+
+#### Sub-commands
+
+**`daily-change`** — compares today's total cost to yesterday's.
+
+```bash
+azure-cost threshold daily-change --percentage 20 --fail-on-threshold
+azure-cost threshold daily-change --fixed-amount 100 -o json
+```
+
+**`forecast-deviation`** — compares actual spend to the Azure forecast for the selected period.
+
+```bash
+azure-cost threshold forecast-deviation --percentage 15 --fail-on-threshold
+azure-cost threshold forecast-deviation --fixed-amount 500 -o markdown
+```
+
+**`service-spike`** — checks every service for a cost spike versus the same-length previous period. Triggers if *any* service breaches the threshold (not just the one with the largest percentage swing).
+
+```bash
+azure-cost threshold service-spike --percentage 50 --fail-on-threshold
+azure-cost threshold service-spike --fixed-amount 200 -s 574385a9-08e9-49fe-91a2-27660d92b8f5
+```
+
+**`weekly-average`** — computes the average daily cost over the last 7 days and checks it against a fixed monetary threshold. Only `--fixed-amount` is supported (use `--percentage` will be rejected with a validation error).
+
+```bash
+azure-cost threshold weekly-average --fixed-amount 50 --fail-on-threshold
+azure-cost threshold weekly-average --fixed-amount 100 -o text
+```
+
+#### Example: GitHub Actions cost gate using threshold
+
+```yaml
+- name: Check daily cost change
+  run: |
+    azure-cost threshold daily-change \
+      --subscription ${{ secrets.AZURE_SUBSCRIPTION_ID }} \
+      --percentage 25 \
+      --fail-on-threshold \
+      --output json > threshold-result.json
+```
+
+All output formats are supported (`-o console`, `-o json`, `-o text`, `-o markdown`, `-o csv`).
+
 ## Filter
 
 With the `--filter` option you can pass in one or more properties to filter on. 

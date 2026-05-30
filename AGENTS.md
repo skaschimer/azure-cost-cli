@@ -20,6 +20,7 @@ src/
 │   ├── Diff/                   # Compare costs between two timeframes
 │   ├── Regions/                # List Azure regions
 │   ├── WhatIf/                 # What-if cost scenarios (region/dev-test)
+│   ├── Threshold/              # CI/CD cost threshold checks (daily-change, forecast-deviation, service-spike, weekly-average)
 │   └── Prices/                 # Price catalog lookup
 ├── CostApi/                    # Azure API integration layer
 │   ├── AzureCostApiRetriever.cs    # Calls Azure Cost Management REST API
@@ -90,6 +91,9 @@ dotnet run --project src/azure-cost-cli.csproj --framework net10.0 -- dailyCosts
 dotnet run --project src/azure-cost-cli.csproj --framework net10.0 -- costByResource -o csv
 dotnet run --project src/azure-cost-cli.csproj --framework net10.0 -- budgets -o json
 dotnet run --project src/azure-cost-cli.csproj --framework net10.0 -- detectAnomalies -o text
+dotnet run --project src/azure-cost-cli.csproj --framework net10.0 -- threshold daily-change --percentage 20 --fail-on-threshold
+dotnet run --project src/azure-cost-cli.csproj --framework net10.0 -- threshold service-spike --fixed-amount 200 -o json
+dotnet run --project src/azure-cost-cli.csproj --framework net10.0 -- threshold weekly-average --fixed-amount 50 --fail-on-threshold
 ```
 
 ### Install as global tool (from source)
@@ -116,6 +120,10 @@ azure-cost accumulatedCost -o json
 | `regions` | List available Azure regions |
 | `what-if region` | Run what-if cost scenarios across regions |
 | `what-if devtest` | Run what-if cost scenarios for dev/test pricing |
+| `threshold daily-change` | Trigger if today's cost change vs yesterday exceeds the threshold |
+| `threshold forecast-deviation` | Trigger if actual spend deviates from forecast by more than the threshold |
+| `threshold service-spike` | Trigger if any service cost spikes beyond the threshold vs previous period |
+| `threshold weekly-average` | Trigger if the 7-day average daily cost exceeds the threshold (fixed-amount only) |
 
 ## Output Formats
 

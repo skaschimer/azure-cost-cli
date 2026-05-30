@@ -81,8 +81,12 @@ app.Configure(config =>
   
   config.SetExceptionHandler((ex, resolver) =>
   {
-    // Explicitly write to error output
-    Console.Error.WriteLine(ex);
+    // CommandRuntimeException wraps validation errors (e.g. ValidationResult.Error).
+    // Print only the message — the stack trace is internal Spectre machinery, not useful to the user.
+    if (ex is Spectre.Console.Cli.CommandRuntimeException)
+      Console.Error.WriteLine($"Error: {ex.Message}");
+    else
+      Console.Error.WriteLine(ex);
     return -1;
   });
 
@@ -117,7 +121,7 @@ app.Configure(config =>
   config.AddCommand<RegionsCommand>("regions")
     .WithDescription("Get the available Azure regions.");
 
-  config.AddBranch<ThresholdSettings>("threshold", add =>
+  config.AddBranch("threshold", add =>
   {
     add.AddCommand<DailyChangeThresholdCommand>("daily-change")
       .WithDescription("Trigger if today's cost change vs yesterday exceeds the threshold.");
